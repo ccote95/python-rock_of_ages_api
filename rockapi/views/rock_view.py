@@ -2,7 +2,8 @@ from django.http import HttpResponseServerError
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
-from rockapi.models import Rock
+from rockapi.models import Rock, Type
+from django.contrib.auth.models import User
 
 
 class RockView(ViewSet):
@@ -15,9 +16,18 @@ class RockView(ViewSet):
         Returns:
             Response -- JSON serialized instance
         """
+        chosen_type = Type.objects.get(pk=request.data['typeId'])
 
+        rock = Rock()
+        rock.user = request.auth.user
+        rock.weight = request.data['weight']
+        rock.name = request.data['name']
+        rock.type = chosen_type
+        rock.save()
+
+        serialized = RockSerializer(rock, many=False)
         # You will implement this feature in a future chapter
-        return Response("", status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response(serialized.data, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def list(self, request):
         """Handle GET requests for all items
@@ -33,9 +43,24 @@ class RockView(ViewSet):
             return HttpResponseServerError(ex)
 
 
-class RockSerializer(serializers.ModelSerializer):
+class RockUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name')
+
+class RockTypeSerializer(serializers.ModelSerializer):
     """JSON serializer"""
 
     class Meta:
+        model = Type
+        fields = ( 'label', )
+
+class RockSerializer(serializers.ModelSerializer):
+    """JSON serializer"""
+
+    type = RockTypeSerializer(many=False)
+    user = RockUserSerializer(many=False)
+
+    class Meta:
         model = Rock
-        fields = ( 'id', 'name', 'weight', )
+        fields = ( 'id', 'name', 'weight', 'user', 'type', )    
