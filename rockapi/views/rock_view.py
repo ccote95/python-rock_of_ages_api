@@ -27,7 +27,7 @@ class RockView(ViewSet):
 
         serialized = RockSerializer(rock, many=False)
         # You will implement this feature in a future chapter
-        return Response(serialized.data, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response(serialized.data, status=status.HTTP_201_CREATED)
 
     def list(self, request):
         """Handle GET requests for all items
